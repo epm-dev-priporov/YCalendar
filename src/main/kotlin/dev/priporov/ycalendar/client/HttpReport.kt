@@ -1,4 +1,4 @@
-package dev.priporov.yandexcalendar.client
+package dev.priporov.ycalendar.client
 
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
