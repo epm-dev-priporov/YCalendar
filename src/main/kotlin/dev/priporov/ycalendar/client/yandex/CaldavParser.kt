@@ -30,7 +30,9 @@ object CaldavParser {
         }
         val value: MultistatusDto? = mapper.readValue(content, MultistatusDto::class.java)
 
-        val now = LocalDateTime.now().toLocalTime()
+        val today = LocalDateTime.now()
+        val currentTIme = today.toLocalTime()
+
         return value?.response
             ?.asSequence()
             ?.map { it.propstat?.prop?.calendarData?.text }
@@ -38,7 +40,8 @@ object CaldavParser {
             ?.map(this::toCalendar)
             ?.flatMap { it.getComponents<VEvent>("VEVENT").asSequence() }
             ?.map(this::toEventDataDto)
-            ?.filter { it.endDate?.toLocalTime()?.isAfter(now) ?: false }
+            ?.filter { it.startDate?.toLocalDate()?.equals(today.toLocalDate()) ?: false }
+            ?.filter { it.endDate?.toLocalTime()?.isAfter(currentTIme) ?: false }
             ?.toSet()
     }
 

@@ -20,10 +20,10 @@ class NotificationConfigPanel : JPanel() {
         setHorizontalTextPosition(SwingConstants.RIGHT)
     }
 
-    val notificationPeriodTextField = JFormattedTextField().apply {
-        toolTipText = "Notify before the meeting. Value 0 means beginning of the meeting,"
+    val notificationFrequencyTextField = JFormattedTextField().apply {
+        toolTipText = "Frequency of events checking."
         formatterFactory = DefaultFormatterFactory(NumberFormatter(NumberFormat.getNumberInstance()))
-        text = "0"
+        text = "30"
     }
 
     val enablePopUpNotificationCheckBox = JBCheckBox("Enable popup dialog notification", true).apply {
@@ -33,7 +33,7 @@ class NotificationConfigPanel : JPanel() {
     init {
         enableNotificationCheckBox.addChangeListener {
             enablePopUpNotificationCheckBox.isEnabled = enableNotificationCheckBox.isSelected
-            notificationPeriodTextField.isEnabled = enableNotificationCheckBox.isSelected
+            notificationFrequencyTextField.isEnabled = enableNotificationCheckBox.isSelected
         }
 
         layout = GridBagLayout()
@@ -58,12 +58,12 @@ class NotificationConfigPanel : JPanel() {
             gridwidth = 1
             ipadx = 5
         }
-        add(JBLabel("Notify before the meeting:"), constraints)
+        add(JBLabel("Frequency of events checking:"), constraints)
         constraints.apply {
             gridx = 1
             gridy = 1
         }
-        add(notificationPeriodTextField, constraints)
+        add(notificationFrequencyTextField, constraints)
         constraints.apply {
             gridx = 2
             gridy = 1
@@ -82,15 +82,15 @@ class NotificationConfigPanel : JPanel() {
 
     fun apply(state: ConfigStateDto) {
         state.enabled = enableNotificationCheckBox.isSelected
-        val newNotificationPeriodTextField = notificationPeriodTextField.text.toLong()
-        if (newNotificationPeriodTextField != state.notificationFrequencyTime) {
-            state.notificationFrequencyTime = newNotificationPeriodTextField
+        val newNotificationFrequencyTextField = notificationFrequencyTextField.text.toLong()
+        if (newNotificationFrequencyTextField != state.notificationFrequencyTime) {
+            state.notificationFrequencyTime = newNotificationFrequencyTextField
             service<SchedulerService>().startNotification(state.notificationFrequencyTime)
         }
     }
 
     fun applyState(state: ConfigStateDto) {
         enableNotificationCheckBox.isSelected = state.enabled
-        notificationPeriodTextField.text = state.notificationFrequencyTime.toString()
+        notificationFrequencyTextField.text = state.notificationFrequencyTime.toString()
     }
 }
