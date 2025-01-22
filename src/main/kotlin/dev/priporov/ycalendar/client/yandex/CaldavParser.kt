@@ -14,9 +14,11 @@ import java.net.URI
 import java.net.URISyntaxException
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
+import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
 object CaldavParser {
+    private val zoneId = TimeZone.getDefault().toZoneId()
 
     private var mapper: XmlMapper = XmlMapper.builder()
         .defaultUseWrapper(false)
@@ -46,8 +48,8 @@ object CaldavParser {
 
     fun toEventDataDto(event: VEvent): EventDataDto {
         return EventDataDto().apply {
-            startDate = event.getDateTimeStart<ZonedDateTime>().get().date
-            endDate = event.getEndDate<ZonedDateTime>().get().date
+            startDate = event.getDateTimeStart<ZonedDateTime>().get().date.withZoneSameInstant(zoneId)
+            endDate = event.getEndDate<ZonedDateTime>().get().date.withZoneSameInstant(zoneId)
             name = event.summary.get().value
             conference = getConferenceLink(event)
             conferenceType = getConferenceType(event)
