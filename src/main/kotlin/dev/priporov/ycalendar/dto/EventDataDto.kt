@@ -8,6 +8,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 class EventDataDto {
+    var url: URI? = null
     var uid: String? = null
     var name: String? = null
     var description: String? = null

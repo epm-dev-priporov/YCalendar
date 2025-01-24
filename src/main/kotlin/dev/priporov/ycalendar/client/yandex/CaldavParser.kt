@@ -40,7 +40,6 @@ object CaldavParser {
             ?.map(this::toCalendar)
             ?.flatMap { it.getComponents<VEvent>("VEVENT").asSequence() }
             ?.map(this::toEventDataDto)
-            ?.filter { it.startDate?.toLocalDate()?.equals(today.toLocalDate()) ?: false }
             ?.filter { it.endDate?.toLocalTime()?.isAfter(currentTIme) ?: false }
             ?.toSet()
     }
@@ -58,6 +57,7 @@ object CaldavParser {
             conferenceType = getConferenceType(event)
             description = event.description.getOrNull()?.value
             uid = event.uid.getOrNull()?.value
+            url = event.url.getOrNull()?.uri
         }
     }
 

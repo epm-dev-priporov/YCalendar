@@ -45,7 +45,19 @@ class EventNotificationPanel(event: EventDataDto) : JPanel() {
             constraints.ipady = 15
 
             val linkLabel = LinkLabel<Any>("${event.conference}", event.conferenceType.icon).apply {
-                addMouseListener(LinkMouseListener(event))
+                addMouseListener(LinkMouseListener(event.conference))
+            }
+
+            add(linkLabel, constraints)
+        }
+        if (event.url != null) {
+            constraints.gridx = 0
+            constraints.gridy = 3
+            constraints.anchor = GridBagConstraints.WEST
+            constraints.ipady = 15
+
+            val linkLabel = LinkLabel<Any>("${event.url}", null).apply {
+                addMouseListener(LinkMouseListener(event.url))
             }
 
             add(linkLabel, constraints)
@@ -60,7 +72,7 @@ class EventNotificationPanel(event: EventDataDto) : JPanel() {
             }
 
             constraints.gridx = 0
-            constraints.gridy = 3
+            constraints.gridy = 4
             constraints.weightx = 0.1
             constraints.weighty = 0.9
             description = urlRegexp.replace(description) { i -> "<a href=\"${i.value}\">${i.value}</a>" }
@@ -68,7 +80,7 @@ class EventNotificationPanel(event: EventDataDto) : JPanel() {
             add(JLabel("<html>${description.replace("\n", "<br>")}</html>"), constraints)
         } else {
             constraints.gridx = 0
-            constraints.gridy = 3
+            constraints.gridy = 4
             constraints.weightx = 0.1
             constraints.weighty = 0.1
             add(JLabel(), constraints)

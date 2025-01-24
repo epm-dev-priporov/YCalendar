@@ -4,10 +4,11 @@ import com.intellij.ide.browsers.BrowserLauncher
 import dev.priporov.ycalendar.dto.EventDataDto
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
+import java.net.URI
 
-class LinkMouseListener(private val event: EventDataDto) : MouseListener {
+class LinkMouseListener(private val uri: URI?) : MouseListener {
     override fun mouseClicked(e: MouseEvent) {
-        val uri = event.conference
+
         if (uri == null) {
             return
         }
