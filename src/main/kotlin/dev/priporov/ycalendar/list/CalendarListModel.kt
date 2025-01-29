@@ -11,7 +11,7 @@ class CalendarListModel : DefaultListModel<EventDataDto>() {
 
     private val map = ConcurrentHashMap<String?, EventDataDto>()
 
-    fun sortedSet() = map.values.sortedBy { it.startDate?.toLocalTime() }
+    fun sortedSet() = map.values.distinctBy { it.uid }.sortedBy { it.startDate?.toLocalTime() }
 
     override fun addElement(element: EventDataDto?) {
         if (element == null) {
