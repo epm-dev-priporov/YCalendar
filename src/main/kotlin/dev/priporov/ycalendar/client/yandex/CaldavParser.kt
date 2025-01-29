@@ -2,17 +2,21 @@ package dev.priporov.ycalendar.client.yandex
 
 import ai.grazie.nlp.utils.dropWhitespaces
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
+import dev.priporov.ycalendar.client.CaldavRequestTemplate
 import dev.priporov.ycalendar.dto.ConferenceType
 import dev.priporov.ycalendar.dto.EventDataDto
 import dev.priporov.ycalendar.dto.MultistatusDto
 import net.fortuna.ical4j.data.CalendarBuilder
 import net.fortuna.ical4j.model.Calendar
+import net.fortuna.ical4j.model.Period
 import net.fortuna.ical4j.model.component.VEvent
 import net.fortuna.ical4j.model.property.Conference
 import java.io.StringReader
 import java.net.URI
 import java.net.URISyntaxException
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
@@ -25,13 +29,16 @@ object CaldavParser {
         .build()
 
     fun toEvents(content: String): Set<EventDataDto>? {
-        if(content.isBlank()) {
+        if (content.isBlank()) {
             return emptySet()
         }
         val value: MultistatusDto? = mapper.readValue(content, MultistatusDto::class.java)
 
         val today = LocalDateTime.now()
         val currentTIme = today.toLocalTime()
+        val now = LocalDate.now()
+        val startDateTime = now.atTime(LocalTime.MIN).atZone(CaldavRequestTemplate.zoneId)
+        val endDateTime = now.atTime(LocalTime.MAX).atZone(CaldavRequestTemplate.zoneId)
 
         return value?.response
             ?.asSequence()
@@ -39,8 +46,9 @@ object CaldavParser {
             ?.filterNotNull()
             ?.map(this::toCalendar)
             ?.flatMap { it.getComponents<VEvent>("VEVENT").asSequence() }
-            ?.map(this::toEventDataDto)
+            ?.map { toEventDataDto(it, startDateTime, endDateTime) }
             ?.filter { it.endDate?.toLocalTime()?.isAfter(currentTIme) ?: false }
+            ?.filter { it.startDate?.toLocalDate()?.equals(today.toLocalDate()) ?: false }
             ?.toSet()
     }
 
@@ -48,10 +56,18 @@ object CaldavParser {
         return CalendarBuilder().build(StringReader(it.dropWhitespaces()))
     }
 
-    fun toEventDataDto(event: VEvent): EventDataDto {
+    fun toEventDataDto(event: VEvent, startDateTime: ZonedDateTime, endDateTime: ZonedDateTime): EventDataDto {
         return EventDataDto().apply {
-            startDate = event.getDateTimeStart<ZonedDateTime>().get().date.withZoneSameInstant(zoneId)
-            endDate = event.getEndDate<ZonedDateTime>().get().date.withZoneSameInstant(zoneId)
+            val recurrence = event.calculateRecurrenceSet<ZonedDateTime>(Period(startDateTime, endDateTime))
+
+            if (!recurrence.isNullOrEmpty()) {
+                val dateTimePeriod = recurrence.first()
+                startDate = dateTimePeriod.start
+                endDate = dateTimePeriod.end
+            } else {
+                startDate = event.getDateTimeStart<ZonedDateTime>().get().date.withZoneSameInstant(zoneId)
+                endDate = event.getEndDate<ZonedDateTime>().get().date.withZoneSameInstant(zoneId)
+            }
             name = event.summary.get().value
             conference = getConferenceLink(event)
             conferenceType = getConferenceType(event)

@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter
 
 object CaldavRequestTemplate {
     private val PATTERN = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
-    private val zoneId = ZoneId.of("UTC")
+    val zoneId = ZoneId.of("UTC")
 
     fun template(): String {
         val now = LocalDate.now()
