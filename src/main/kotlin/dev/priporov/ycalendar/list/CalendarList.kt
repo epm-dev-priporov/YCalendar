@@ -7,8 +7,5 @@ import dev.priporov.ycalendar.dto.EventDataDto
 
 @Service(Service.Level.PROJECT)
 class CalendarList : JBList<EventDataDto>() {
-    init {
-        model = service<CalendarListModel>()
-        cellRenderer = service<CalendarListCellRenderer>()
-    }
+
 }
