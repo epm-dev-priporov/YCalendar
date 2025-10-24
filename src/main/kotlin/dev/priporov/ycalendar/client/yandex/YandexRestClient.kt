@@ -6,6 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import dev.priporov.ycalendar.client.CaldavRequestTemplate
 import dev.priporov.ycalendar.client.HttpReport
+import dev.priporov.ycalendar.client.UrlProvider
 import dev.priporov.ycalendar.dto.EventDataDto
 import dev.priporov.ycalendar.dto.state.ConfigStateDto
 import dev.priporov.ycalendar.service.StateService
@@ -17,7 +18,6 @@ import java.util.*
 
 @Service
 class YandexRestClient {
-    private val yandexUrl = "https://caldav.yandex.ru"
     private val client = HttpClientBuilder.create().build()
 
     fun getTodayEvents(): Set<EventDataDto> {
@@ -32,11 +32,14 @@ class YandexRestClient {
             "$email:$password".toByteArray(Charset.forName("UTF-8"))
         )
 
-        val url = "$yandexUrl/calendars/$email/events-default"
+        val url = service<UrlProvider>().getUlr()
         val request = HttpReport(
             url,
             CaldavRequestTemplate.template(),
-            mapOf(Pair(HttpHeaders.AUTHORIZATION, "Basic ${secret}"))
+            mapOf(
+                Pair(HttpHeaders.AUTHORIZATION, "Basic ${secret}"),
+                Pair("Depth", "1")
+            )
         )
 
         val content = client.execute(request, BasicResponseHandler())
