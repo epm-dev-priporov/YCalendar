@@ -19,6 +19,8 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.util.*
+import kotlin.jvm.optionals.getOrDefault
+import kotlin.jvm.optionals.getOrElse
 import kotlin.jvm.optionals.getOrNull
 
 object CaldavParser {
@@ -68,7 +70,14 @@ object CaldavParser {
                 startDate = event.getDateTimeStart<ZonedDateTime>().get().date.withZoneSameInstant(zoneId)
                 endDate = event.getEndDate<ZonedDateTime>().get().date.withZoneSameInstant(zoneId)
             }
-            name = event.summary.get().value
+            name = if(event.summary.isPresent){
+                event.summary.get().value
+            } else if (event.location.isPresent){
+                event.location.get().value
+            } else {
+                "Event"
+            }
+
             conference = getConferenceLink(event)
             conferenceType = getConferenceType(event)
             description = event.description.getOrNull()?.value
