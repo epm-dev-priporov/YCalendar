@@ -42,7 +42,7 @@ tasks {
     }
     dependencies{
         implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.2")
-        implementation("org.mnode.ical4j:ical4j:4.0.8")
+        implementation("org.mnode.ical4j:ical4j:4.2.0")
     }
     publishPlugin {
         token.set(System.getenv("PUBLISH_TOKEN"))

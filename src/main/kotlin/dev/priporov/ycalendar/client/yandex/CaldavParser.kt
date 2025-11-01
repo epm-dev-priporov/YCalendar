@@ -7,6 +7,7 @@ import dev.priporov.ycalendar.dto.ConferenceType
 import dev.priporov.ycalendar.dto.EventDataDto
 import dev.priporov.ycalendar.dto.MultistatusDto
 import net.fortuna.ical4j.data.CalendarBuilder
+import net.fortuna.ical4j.data.ParserException
 import net.fortuna.ical4j.model.Calendar
 import net.fortuna.ical4j.model.Period
 import net.fortuna.ical4j.model.Property
@@ -35,11 +36,12 @@ object CaldavParser {
         }
         val value: MultistatusDto? = mapper.readValue(content, MultistatusDto::class.java)
 
-        val today = LocalDateTime.now()
-        val currentTIme = today.toLocalTime()
-        val now = LocalDate.now()
+        val today = ZonedDateTime.now(zoneId)
+
+        val now = ZonedDateTime.now().toLocalDate()
         val startDateTime = now.atTime(LocalTime.MIN).atZone(CaldavRequestTemplate.zoneId)
         val endDateTime = now.atTime(LocalTime.MAX).atZone(CaldavRequestTemplate.zoneId)
+
 
         return value?.response
             ?.asSequence()
@@ -48,13 +50,18 @@ object CaldavParser {
             ?.map(this::toCalendar)
             ?.flatMap { it.getComponents<VEvent>("VEVENT").asSequence() }
             ?.map { toEventDataDto(it, startDateTime, endDateTime) }
-            ?.filter { it.endDate?.toLocalTime()?.isAfter(currentTIme) ?: false }
+            ?.filter { it.endDate?.isAfter(today) ?: false }
             ?.filter { it.startDate?.toLocalDate()?.equals(today.toLocalDate()) ?: false }
             ?.toSet()
     }
 
     private fun toCalendar(it: String): Calendar {
-        return CalendarBuilder().build(StringReader(it.dropWhitespaces()))
+        try {
+            return CalendarBuilder().build(StringReader(it.dropWhitespaces()))
+        } catch (parserException: ParserException) {
+            val fixedString = it.substringBeforeLast("END:VCALENDAR", it) + "END:VEVENT\n" + "END:VCALENDAR"
+            return CalendarBuilder().build(StringReader(fixedString.dropWhitespaces()))
+        }
     }
 
     fun toEventDataDto(event: VEvent, startDateTime: ZonedDateTime, endDateTime: ZonedDateTime): EventDataDto {
@@ -63,10 +70,10 @@ object CaldavParser {
 
             if (!recurrence.isNullOrEmpty()) {
                 val dateTimePeriod = recurrence.first()
-                startDate = dateTimePeriod.start
-                endDate = dateTimePeriod.end
+                startDate = dateTimePeriod.start.withZoneSameInstant(zoneId)
+                endDate = dateTimePeriod.end.withZoneSameInstant(zoneId)
             } else {
-                startDate = event.getDateTimeStart<ZonedDateTime>().get().date.withZoneSameInstant(zoneId)
+                startDate = event.getDateTimeStart<ZonedDateTime>().date.withZoneSameInstant(zoneId)
                 endDate = event.getEndDate<ZonedDateTime>().get().date.withZoneSameInstant(zoneId)
             }
             name = event.getProperties<Property>()
@@ -76,10 +83,10 @@ object CaldavParser {
                 .firstOrNull()?.substring(8)
 
             if(name.isNullOrBlank()){
-                name = if(event.summary.isPresent){
-                    event.summary.get().value
-                } else if (event.location.isPresent){
-                    event.location.get().value
+                name = if(event.summary != null){
+                    event.summary.value
+                } else if (event.location != null){
+                    event.location.value
                 } else {
                     "Event"
                 }
@@ -87,9 +94,9 @@ object CaldavParser {
 
             conference = getConferenceLink(event)
             conferenceType = getConferenceType(event)
-            description = event.description.getOrNull()?.value
+            description = event.description?.value
             uid = event.uid.getOrNull()?.value
-            url = event.url.getOrNull()?.uri
+            url = event.url?.uri
         }
     }
 
@@ -99,8 +106,8 @@ object CaldavParser {
             return toUri(conference.get().value)
         }
         val description = event.description
-        if (description != null && description.isPresent) {
-            val descriptionText = description.get().value
+        if (description != null && description != null) {
+            val descriptionText = description.value
             val url = "https://" + descriptionText.substringAfter("https://")
                 .substringBefore(' ')
                 .substringBefore('\t')
@@ -118,8 +125,8 @@ object CaldavParser {
             return ConferenceType.TELEMOST
         }
         val description = event.description
-        if (description != null && description.isPresent) {
-            val descriptionText = description.get().value
+        if (description != null && description != null) {
+            val descriptionText = description.value
             val url = descriptionText.substringAfter("https://").substringBefore(' ')
             if (url.isNotEmpty() && url.contains(".zoom.")) {
                 return ConferenceType.ZOOM
