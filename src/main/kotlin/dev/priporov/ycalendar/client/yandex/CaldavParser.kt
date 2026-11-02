@@ -50,19 +50,26 @@ object CaldavParser {
             ?.map(this::toCalendar)
             ?.flatMap { it.getComponents<VEvent>("VEVENT").asSequence() }
             ?.map { toEventDataDto(it, startDateTime, endDateTime) }
-            ?.filter { it.endDate?.isAfter(today) ?: false }
-            ?.filter { it.startDate?.toLocalDate()?.equals(today.toLocalDate()) ?: false }
+//            ?.filter { it.endDate?.isAfter(today) ?: false }
+//            ?.filter { it.startDate?.toLocalDate()?.equals(today.toLocalDate()) ?: false }
             ?.toSet()
     }
 
     private fun toCalendar(it: String): Calendar {
+        val ics = normalizeLineEndings(it.dropWhitespaces())
         try {
-            return CalendarBuilder().build(StringReader(it.dropWhitespaces()))
+            return CalendarBuilder().build(StringReader(ics))
         } catch (parserException: ParserException) {
-            val fixedString = it.substringBeforeLast("END:VCALENDAR", it) + "END:VEVENT\n" + "END:VCALENDAR"
-            return CalendarBuilder().build(StringReader(fixedString.dropWhitespaces()))
+            val fixedString = ics.substringBeforeLast("END:VCALENDAR", ics) + "END:VEVENT\r\n" + "END:VCALENDAR"
+            return CalendarBuilder().build(StringReader(fixedString))
         }
     }
+
+    // RFC 5545 требует CRLF как разделитель строк, но XML-процессор нормализует переводы строк к LF (XML 1.0, §2.11),
+    // в том числе внутри CDATA. Без CRLF ical4j не склеивает folded-строки, и длинные значения
+    // (например, DESCRIPTION со ссылкой на видеозвонок) обрезаются на границе переноса.
+    private fun normalizeLineEndings(ics: String): String =
+        ics.replace("\r\n", "\n").replace("\n", "\r\n")
 
     fun toEventDataDto(event: VEvent, startDateTime: ZonedDateTime, endDateTime: ZonedDateTime): EventDataDto {
         return EventDataDto().apply {
@@ -94,6 +101,7 @@ object CaldavParser {
 
             conference = getConferenceLink(event)
             conferenceType = getConferenceType(event)
+            location = event.location?.value
             description = event.description?.value
             uid = event.uid.getOrNull()?.value
             url = event.url?.uri
@@ -108,15 +116,25 @@ object CaldavParser {
         val description = event.description
         if (description != null && description != null) {
             val descriptionText = description.value
-            val url = "https://" + descriptionText.substringAfter("https://")
-                .substringBefore(' ')
-                .substringBefore('\t')
-                .substringBefore('\n')
+            val url = extractUrlFromDescription(descriptionText)
             if (url.isNotEmpty()) {
                 return toUri(url)
             }
         }
         return null
+    }
+
+    private fun extractUrlFromDescription(descriptionText: String): String {
+        val httpsIndex = descriptionText.indexOf("https://")
+        if (httpsIndex == -1) return ""
+
+        val afterProtocol = descriptionText.substring(httpsIndex + "https://".length)
+        // URL может содержать допустимые символы, включая спецсимволы в путях
+        // Останавливаемся только на разделителях, которые точно не входят в URL
+        val url = afterProtocol.takeWhile { c ->
+            c !in " \t\n\r\u00A0" && c != '<' && c != '>'
+        }
+        return "https://$url"
     }
 
     fun getConferenceType(event: VEvent): ConferenceType {
@@ -126,8 +144,7 @@ object CaldavParser {
         }
         val description = event.description
         if (description != null && description != null) {
-            val descriptionText = description.value
-            val url = descriptionText.substringAfter("https://").substringBefore(' ')
+            val url = extractUrlFromDescription(description.value)
             if (url.isNotEmpty() && url.contains(".zoom.")) {
                 return ConferenceType.ZOOM
             }

@@ -30,6 +30,7 @@ class CalendarListModel : DefaultListModel<EventDataDto>() {
                 endDate = element.endDate
                 description = element.description
                 name = element.name
+                location = element.location
                 conference = element.conference
                 conferenceType = element.conferenceType
             }

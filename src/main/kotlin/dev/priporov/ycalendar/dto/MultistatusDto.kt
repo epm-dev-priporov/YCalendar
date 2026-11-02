@@ -3,17 +3,15 @@ package dev.priporov.ycalendar.dto
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement
 
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-class MultistatusResponseDto {
-    @JsonProperty("multistatus")
-    var multistatus: MultistatusDto? = null
-}
-
+@JacksonXmlRootElement(localName = "multistatus")
 @JsonIgnoreProperties(ignoreUnknown = true)
 class MultistatusDto {
+    @JacksonXmlProperty(localName = "response")
     @JsonProperty("response")
     @JacksonXmlElementWrapper(useWrapping = false)
     var response: List<ResponseDto>? = null

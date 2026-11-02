@@ -21,14 +21,16 @@ class EventNotificationPanel(event: EventDataDto) : JPanel() {
         layout = GridBagLayout()
         val constraints = GridBagConstraints()
 
+        var row = 0
+
         constraints.gridx = 0
-        constraints.gridy = 0
+        constraints.gridy = row++
         constraints.anchor = GridBagConstraints.WEST
         constraints.ipady = 15
         add(JLabel("<html><b>${event.name}</b></html>"), constraints)
 
         constraints.gridx = 0
-        constraints.gridy = 1
+        constraints.gridy = row++
         constraints.anchor = GridBagConstraints.WEST
 
 
@@ -38,26 +40,39 @@ class EventNotificationPanel(event: EventDataDto) : JPanel() {
 
         add(JLabel("$startDate - $endDate"), constraints)
 
+        if (!event.location.isNullOrBlank()) {
+            constraints.gridx = 0
+            constraints.gridy = row++
+            constraints.anchor = GridBagConstraints.WEST
+            constraints.ipady = 15
+
+            add(JLabel("<html><b>Location:</b> ${event.location}</html>"), constraints)
+        }
+
         if (event.conference != null) {
             constraints.gridx = 0
-            constraints.gridy = 2
+            constraints.gridy = row++
             constraints.anchor = GridBagConstraints.WEST
             constraints.ipady = 15
 
             val linkLabel = LinkLabel<Any>("${event.conference}", event.conferenceType.icon).apply {
                 addMouseListener(LinkMouseListener(event.conference))
+                maximumSize = java.awt.Dimension(500, preferredSize.height)
+                horizontalAlignment = javax.swing.SwingConstants.LEFT
             }
 
             add(linkLabel, constraints)
         }
         if (event.url != null) {
             constraints.gridx = 0
-            constraints.gridy = 3
+            constraints.gridy = row++
             constraints.anchor = GridBagConstraints.WEST
             constraints.ipady = 15
 
             val linkLabel = LinkLabel<Any>("${event.url}", null).apply {
                 addMouseListener(LinkMouseListener(event.url))
+                maximumSize = java.awt.Dimension(500, preferredSize.height)
+                horizontalAlignment = javax.swing.SwingConstants.LEFT
             }
 
             add(linkLabel, constraints)
@@ -72,7 +87,7 @@ class EventNotificationPanel(event: EventDataDto) : JPanel() {
             }
 
             constraints.gridx = 0
-            constraints.gridy = 4
+            constraints.gridy = row++
             constraints.weightx = 0.1
             constraints.weighty = 0.9
             description = urlRegexp.replace(description) { i -> "<a href=\"${i.value}\">${i.value}</a>" }
@@ -80,7 +95,7 @@ class EventNotificationPanel(event: EventDataDto) : JPanel() {
             add(JLabel("<html>${description.replace("\n", "<br>")}</html>"), constraints)
         } else {
             constraints.gridx = 0
-            constraints.gridy = 4
+            constraints.gridy = row++
             constraints.weightx = 0.1
             constraints.weighty = 0.1
             add(JLabel(), constraints)

@@ -11,6 +11,7 @@ class EventDataDto {
     var url: URI? = null
     var uid: String? = null
     var name: String? = null
+    var location: String? = null
     var description: String? = null
     var startDate: ZonedDateTime? = null
     var endDate: ZonedDateTime? = null
@@ -21,7 +22,9 @@ class EventDataDto {
     private val pattern = DateTimeFormatter.ofPattern("HH:mm")
 
     override fun toString(): String {
-        return "${startDate?.format(pattern)}-${endDate?.format(pattern)} ${name}"
+        val time = "${startDate?.format(pattern)}-${endDate?.format(pattern)}"
+        val title = if (location.isNullOrBlank()) name else "$name @ $location"
+        return "$time $title"
     }
 
     override fun equals(other: Any?): Boolean {
