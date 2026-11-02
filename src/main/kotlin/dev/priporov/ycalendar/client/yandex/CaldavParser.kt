@@ -50,8 +50,8 @@ object CaldavParser {
             ?.map(this::toCalendar)
             ?.flatMap { it.getComponents<VEvent>("VEVENT").asSequence() }
             ?.map { toEventDataDto(it, startDateTime, endDateTime) }
-//            ?.filter { it.endDate?.isAfter(today) ?: false }
-//            ?.filter { it.startDate?.toLocalDate()?.equals(today.toLocalDate()) ?: false }
+            ?.filter { it.endDate?.isAfter(today) ?: false }
+            ?.filter { it.startDate?.toLocalDate()?.equals(today.toLocalDate()) ?: false }
             ?.toSet()
     }
 
