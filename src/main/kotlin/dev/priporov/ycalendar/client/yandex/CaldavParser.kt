@@ -101,8 +101,8 @@ object CaldavParser {
 
             conference = getConferenceLink(event)
             conferenceType = getConferenceType(event)
-            location = event.location?.value
             description = event.description?.value
+            location = event.location?.value
             uid = event.uid.getOrNull()?.value
             url = event.url?.uri
         }

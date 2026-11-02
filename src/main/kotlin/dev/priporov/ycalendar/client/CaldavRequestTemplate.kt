@@ -11,7 +11,7 @@ object CaldavRequestTemplate {
     val zoneId = ZoneId.of("UTC")
 
     fun template(): String {
-        val now = LocalDate.now().plusDays(1)
+        val now = LocalDate.now()
         val today = now.atTime(LocalTime.MIN).atZone(zoneId)
         val tomorrow = now.atTime(LocalTime.MAX).atZone(zoneId)
         
