@@ -17,6 +17,7 @@ class EventDataDto {
     var endDate: ZonedDateTime? = null
     var conference: URI? = null
     var conferenceType: ConferenceType = ConferenceType.OTHER
+    var cancelled: Boolean = false
     var notified: AtomicBoolean = AtomicBoolean(false)
 
     private val pattern = DateTimeFormatter.ofPattern("HH:mm")

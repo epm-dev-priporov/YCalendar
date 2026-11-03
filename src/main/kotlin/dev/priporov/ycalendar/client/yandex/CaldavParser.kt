@@ -13,11 +13,10 @@ import net.fortuna.ical4j.model.Period
 import net.fortuna.ical4j.model.Property
 import net.fortuna.ical4j.model.component.VEvent
 import net.fortuna.ical4j.model.property.Conference
+import net.fortuna.ical4j.model.property.Status
 import java.io.StringReader
 import java.net.URI
 import java.net.URISyntaxException
-import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.util.*
@@ -50,6 +49,7 @@ object CaldavParser {
             ?.map(this::toCalendar)
             ?.flatMap { it.getComponents<VEvent>("VEVENT").asSequence() }
             ?.map { toEventDataDto(it, startDateTime, endDateTime) }
+            ?.filter { !it.cancelled }
             ?.filter { it.endDate?.isAfter(today) ?: false }
             ?.filter { it.startDate?.toLocalDate()?.equals(today.toLocalDate()) ?: false }
             ?.toSet()
@@ -103,6 +103,7 @@ object CaldavParser {
             conferenceType = getConferenceType(event)
             description = event.description?.value
             location = event.location?.value
+            cancelled = event.status?.value?.equals(Status.VALUE_CANCELLED, ignoreCase = true) ?: false
             uid = event.uid.getOrNull()?.value
             url = event.url?.uri
         }
